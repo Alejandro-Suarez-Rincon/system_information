@@ -1,80 +1,106 @@
 import 'package:flutter/material.dart';
+import 'package:system_information/theme/app_theme.dart';
 
+/// Tarjeta oscura para una métrica con barra de progreso opcional.
+/// Se usa para almacenamiento e información del dispositivo.
 class StatCard extends StatelessWidget {
   final String title;
   final String value;
-  final String unit;
+  final String? unit;
   final IconData icon;
   final Color color;
-  final double? percentage;  // Opcional para barras de progreso
+
+  /// Barra de progreso 0-100 (opcional).
+  final double? percentage;
+
+  /// Widget final opcional (p. ej. icono de carga).
+  final Widget? trailing;
 
   const StatCard({
+    super.key,
     required this.title,
     required this.value,
-    required this.unit,
     required this.icon,
     required this.color,
+    this.unit,
     this.percentage,
+    this.trailing,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.all(10),
-      padding: EdgeInsets.all(20),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Encabezado con icono
           Row(
             children: [
-              Icon(icon, color: color, size: 30),
-              SizedBox(width: 15),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey[700],
+              Container(
+                width: 38,
+                height: 38,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
+              ?trailing,
             ],
           ),
-          SizedBox(height: 15),
-
-          // Valor
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
+          const SizedBox(height: 14),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Flexible(
+                child: Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: AppColors.textPrimary,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              if (unit != null) ...[
+                const SizedBox(width: 6),
+                Text(
+                  unit!,
+                  style: const TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ],
           ),
-          Text(
-            unit,
-            style: TextStyle(fontSize: 12, color: Colors.grey),
-          ),
-
-          // Barra de progreso (opcional)
           if (percentage != null) ...[
-            SizedBox(height: 15),
+            const SizedBox(height: 14),
             ClipRRect(
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(8),
               child: LinearProgressIndicator(
-                value: percentage! / 100,
+                value: (percentage! / 100).clamp(0.0, 1.0),
                 minHeight: 8,
-                backgroundColor: Colors.grey[300],
+                backgroundColor: AppColors.surfaceHigh,
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
