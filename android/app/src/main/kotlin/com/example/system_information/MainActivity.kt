@@ -7,6 +7,7 @@ import android.os.StatFs
 import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
+import java.io.File
 import java.io.RandomAccessFile
 
 class MainActivity : FlutterActivity() {
@@ -36,8 +37,12 @@ class MainActivity : FlutterActivity() {
         val storageTotal = stat.blockSizeLong * stat.blockCountLong
         val storageFree = stat.blockSizeLong * stat.availableBlocksLong
 
+        val cpu = readCpu()
+
         return mapOf(
-            "cpuUsage" to readCpuUsage(),
+            "cpuUsage" to cpu.percent,
+            "cpuMode" to cpu.mode,
+            "cpuDetail" to cpu.detail,
             "ramTotal" to mem.totalMem,
             "ramUsed" to (mem.totalMem - mem.availMem),
             "storageTotal" to storageTotal,
@@ -45,9 +50,20 @@ class MainActivity : FlutterActivity() {
         )
     }
 
+    private data class CpuReading(val percent: Double, val mode: String, val detail: String)
+
+    /// Estrategia de CPU en Android:
+    /// 1) intenta /proc/stat (uso real del sistema) — bloqueado por SELinux en Android 8+.
+    /// 2) si falla, usa la frecuencia de los núcleos (cur/max) como indicador en vivo.
+    private fun readCpu(): CpuReading {
+        val usage = readCpuUsageProc()
+        if (usage >= 0) return CpuReading(usage, "usage", "")
+        return readCpuFrequency()
+    }
+
     /// Uso de CPU (0-100) leyendo /proc/stat. Devuelve -1 si el sistema lo
     /// restringe (SELinux en Android 8+) o si aún no hay muestra previa.
-    private fun readCpuUsage(): Double {
+    private fun readCpuUsageProc(): Double {
         return try {
             val load = RandomAccessFile("/proc/stat", "r").use { it.readLine() }
             val toks = load.split(" ").filter { it.isNotEmpty() }
@@ -73,5 +89,36 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             -1.0
         }
+    }
+
+    /// Carga por frecuencia: promedio de scaling_cur_freq / cpuinfo_max_freq
+    /// en todos los núcleos legibles. Devuelve el % y la frecuencia media en GHz.
+    private fun readCpuFrequency(): CpuReading {
+        var sumCur = 0L
+        var sumMax = 0L
+        var count = 0
+        val cores = Runtime.getRuntime().availableProcessors()
+
+        for (i in 0 until cores) {
+            try {
+                val base = "/sys/devices/system/cpu/cpu$i/cpufreq"
+                val cur = File("$base/scaling_cur_freq").readText().trim().toLongOrNull() ?: continue
+                val max = File("$base/cpuinfo_max_freq").readText().trim().toLongOrNull()
+                    ?: File("$base/scaling_max_freq").readText().trim().toLongOrNull()
+                    ?: continue
+                if (max <= 0L) continue
+                sumCur += cur
+                sumMax += max
+                count++
+            } catch (e: Exception) {
+                // Núcleo apagado o restringido: se omite.
+            }
+        }
+
+        if (count == 0 || sumMax <= 0L) return CpuReading(-1.0, "frequency", "")
+
+        val percent = (sumCur.toDouble() / sumMax.toDouble() * 100.0).coerceIn(0.0, 100.0)
+        val avgGhz = (sumCur.toDouble() / count) / 1_000_000.0
+        return CpuReading(percent, "frequency", String.format("%.1f GHz", avgGhz))
     }
 }

@@ -9,6 +9,12 @@ class DeviceStats {
   final int cpuCores;
   final String cpuArch;
   final double cpuUsage;
+
+  /// "usage" = uso real del sistema; "frequency" = carga por frecuencia (Android).
+  final String cpuMode;
+
+  /// Detalle textual de CPU (p. ej. "1.5 GHz"), vacío si no aplica.
+  final String cpuDetail;
   final int ramUsed;
   final int ramTotal;
   final int storageUsed;
@@ -22,6 +28,8 @@ class DeviceStats {
     required this.cpuCores,
     required this.cpuArch,
     required this.cpuUsage,
+    required this.cpuMode,
+    required this.cpuDetail,
     required this.ramUsed,
     required this.ramTotal,
     required this.storageUsed,
@@ -37,6 +45,8 @@ class DeviceStats {
         cpuCores: 0,
         cpuArch: '',
         cpuUsage: -1,
+        cpuMode: 'usage',
+        cpuDetail: '',
         ramUsed: 0,
         ramTotal: 0,
         storageUsed: 0,
@@ -47,12 +57,17 @@ class DeviceStats {
 
   bool get hasCpuUsage => cpuUsage >= 0;
 
+  /// true si el porcentaje de CPU representa frecuencia (Android), no uso real.
+  bool get cpuIsFrequency => cpuMode == 'frequency';
+
   DeviceStats copyWith({
     String? deviceName,
     String? osVersion,
     int? cpuCores,
     String? cpuArch,
     double? cpuUsage,
+    String? cpuMode,
+    String? cpuDetail,
     int? ramUsed,
     int? ramTotal,
     int? storageUsed,
@@ -66,6 +81,8 @@ class DeviceStats {
       cpuCores: cpuCores ?? this.cpuCores,
       cpuArch: cpuArch ?? this.cpuArch,
       cpuUsage: cpuUsage ?? this.cpuUsage,
+      cpuMode: cpuMode ?? this.cpuMode,
+      cpuDetail: cpuDetail ?? this.cpuDetail,
       ramUsed: ramUsed ?? this.ramUsed,
       ramTotal: ramTotal ?? this.ramTotal,
       storageUsed: storageUsed ?? this.storageUsed,

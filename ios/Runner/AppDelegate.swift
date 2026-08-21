@@ -44,6 +44,8 @@ final class SystemMetrics {
     let storage = storageInfo()
     return [
       "cpuUsage": cpuUsage(),
+      "cpuMode": "usage",
+      "cpuDetail": "",
       "ramTotal": Int(ramTotal()),
       "ramUsed": Int(ramUsed()),
       "storageTotal": storage.total,

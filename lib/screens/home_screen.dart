@@ -138,14 +138,14 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         Expanded(
           child: GaugeCard(
-            title: 'CPU',
+            title: _stats.cpuIsFrequency ? 'CPU · frec.' : 'CPU',
             icon: Icons.memory,
             color: AppColors.cpu,
             percent: _stats.hasCpuUsage ? _stats.cpuUsage : -1,
             centerText: _stats.hasCpuUsage
                 ? '${_stats.cpuUsage.round()}%'
                 : 'n/d',
-            subtitle: '${_stats.cpuCores} núcleos',
+            subtitle: _cpuSubtitle(),
           ),
         ),
         const SizedBox(width: 14),
@@ -164,6 +164,14 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
       ],
     );
+  }
+
+  String _cpuSubtitle() {
+    final cores = '${_stats.cpuCores} núcleos';
+    if (_stats.cpuDetail.isNotEmpty) {
+      return '${_stats.cpuDetail} · $cores';
+    }
+    return cores;
   }
 
   Widget _storageCard() {

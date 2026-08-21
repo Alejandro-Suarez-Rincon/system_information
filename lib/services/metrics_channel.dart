@@ -2,8 +2,16 @@ import 'package:flutter/services.dart';
 
 /// Resultado del canal nativo de métricas.
 class NativeMetrics {
-  /// Uso de CPU 0-100, o negativo si la plataforma no lo permite.
+  /// Valor 0-100 para el gauge de CPU, o negativo si no está disponible.
+  /// Su significado depende de [cpuMode].
   final double cpuUsage;
+
+  /// "usage" = uso real del sistema (macOS/iOS).
+  /// "frequency" = carga por frecuencia de núcleos (Android).
+  final String cpuMode;
+
+  /// Detalle textual opcional de CPU (p. ej. "1.5 GHz").
+  final String cpuDetail;
 
   /// RAM total y en uso, en bytes.
   final int ramTotal;
@@ -15,6 +23,8 @@ class NativeMetrics {
 
   const NativeMetrics({
     required this.cpuUsage,
+    required this.cpuMode,
+    required this.cpuDetail,
     required this.ramTotal,
     required this.ramUsed,
     required this.storageTotal,
@@ -23,6 +33,8 @@ class NativeMetrics {
 
   static const NativeMetrics unavailable = NativeMetrics(
     cpuUsage: -1,
+    cpuMode: 'usage',
+    cpuDetail: '',
     ramTotal: 0,
     ramUsed: 0,
     storageTotal: 0,
@@ -42,6 +54,8 @@ class MetricsChannel {
       if (result == null) return NativeMetrics.unavailable;
       return NativeMetrics(
         cpuUsage: (result['cpuUsage'] as num?)?.toDouble() ?? -1,
+        cpuMode: (result['cpuMode'] as String?) ?? 'usage',
+        cpuDetail: (result['cpuDetail'] as String?) ?? '',
         ramTotal: (result['ramTotal'] as num?)?.toInt() ?? 0,
         ramUsed: (result['ramUsed'] as num?)?.toInt() ?? 0,
         storageTotal: (result['storageTotal'] as num?)?.toInt() ?? 0,

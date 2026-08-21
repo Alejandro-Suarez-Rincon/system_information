@@ -31,6 +31,8 @@ class DeviceService {
       cpuCores: info.cpuCores,
       cpuArch: info.cpuArch,
       cpuUsage: native.cpuUsage,
+      cpuMode: native.cpuMode,
+      cpuDetail: native.cpuDetail,
       ramUsed: native.ramUsed,
       ramTotal: native.ramTotal,
       storageUsed: native.storageUsed,
